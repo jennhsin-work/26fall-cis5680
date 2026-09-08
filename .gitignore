@@ -2,17 +2,11 @@ Library/
 Temp/
 Logs/
 obj/
+UserSettings/
 
 *.csproj
 *.unityproj
 *.sln
 *.user
-*.pidb
-*.booproj
-*.svd
-*.pdb
-*.mdb
-*.opendb
-*.VC.db
 
-.DS_StoreUserSettings/
+.DS_Store
