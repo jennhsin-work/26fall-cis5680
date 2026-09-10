@@ -17,19 +17,19 @@ public class CameraController : MonoBehaviour
     public CameraViewMode currentViewMode = CameraViewMode.Arcade3D;
 
     [Header("Arcade 3D View (Default)")]
-    public Vector3 arcade3DPosition = new Vector3(0f, 17.5f, -13.0f);
-    public Vector3 arcade3DRotation = new Vector3(52.0f, 0f, 0f);
-    public float arcade3DFOV = 52f;
+    public Vector3 arcade3DPosition = new Vector3(0f, 7.5f, -14.5f);
+    public Vector3 arcade3DRotation = new Vector3(20.0f, 0f, 0f);
+    public float arcade3DFOV = 58f;
 
     [Header("Action Follow 3D View")]
-    public Vector3 followOffset = new Vector3(0f, 4.2f, -5.5f);
-    public Vector3 followRotation = new Vector3(24.0f, 0f, 0f);
-    public float followFOV = 62f;
+    public Vector3 followOffset = new Vector3(0f, 5.0f, -6.5f);
+    public Vector3 followRotation = new Vector3(18.0f, 0f, 0f);
+    public float followFOV = 60f;
 
     [Header("Retro 2D View")]
-    public Vector3 retro2DPosition = new Vector3(0f, 22.0f, 2.0f);
-    public Vector3 retro2DRotation = new Vector3(90.0f, 0f, 0f);
-    public float retro2DFOV = 50f;
+    public Vector3 retro2DPosition = new Vector3(0f, 5.5f, -15.5f);
+    public Vector3 retro2DRotation = new Vector3(15.0f, 0f, 0f);
+    public float retro2DFOV = 58f;
 
     [Header("Smoothing")]
     public float positionSmoothSpeed = 12f;
@@ -106,7 +106,7 @@ public class CameraController : MonoBehaviour
         {
             case CameraViewMode.ActionFollow3D:
                 Vector3 playerPos = targetPlayer != null ? targetPlayer.position : new Vector3(0f, 0f, -6.5f);
-                targetPos = new Vector3(playerPos.x * 0.75f, playerPos.y + followOffset.y, playerPos.z + followOffset.z);
+                targetPos = new Vector3(playerPos.x * 0.75f, playerPos.y * 0.5f + followOffset.y, playerPos.z + followOffset.z);
                 float swayYaw = currentAimNormalized.x * 4.0f;
                 targetRot = Quaternion.Euler(followRotation.x, swayYaw, 0f);
                 targetFOV = followFOV;
@@ -120,8 +120,9 @@ public class CameraController : MonoBehaviour
 
             case CameraViewMode.Arcade3D:
             default:
-                float slightTrackX = targetPlayer != null ? targetPlayer.position.x * 0.18f : 0f;
-                targetPos = new Vector3(slightTrackX, arcade3DPosition.y, arcade3DPosition.z);
+                float slightTrackX = targetPlayer != null ? targetPlayer.position.x * 0.12f : 0f;
+                float slightTrackY = targetPlayer != null ? targetPlayer.position.y * 0.15f : 0f;
+                targetPos = new Vector3(slightTrackX, arcade3DPosition.y + slightTrackY, arcade3DPosition.z);
                 targetRot = Quaternion.Euler(arcade3DRotation);
                 targetFOV = arcade3DFOV;
                 break;

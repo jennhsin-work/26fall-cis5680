@@ -281,13 +281,18 @@ public class CockpitVisuals : MonoBehaviour
         }
     }
 
-    public void UpdateSteering(float horizontalInput, bool isMoving)
+    public void UpdateSteering(float horizontalInput, float verticalInput, bool isMoving)
     {
         steerAngle = Mathf.Lerp(steerAngle, horizontalInput * 18f, Time.deltaTime * 10f);
 
-        // Thruster flare
-        float leftFlare = (horizontalInput > 0.1f) ? 1.6f : ((horizontalInput < -0.1f) ? 0.7f : 1.0f);
-        float rightFlare = (horizontalInput < -0.1f) ? 1.6f : ((horizontalInput > 0.1f) ? 0.7f : 1.0f);
+        float leftFlare = (horizontalInput > 0.1f) ? 1.3f : ((horizontalInput < -0.1f) ? 0.7f : 1.0f);
+        float rightFlare = (horizontalInput < -0.1f) ? 1.3f : ((horizontalInput > 0.1f) ? 0.7f : 1.0f);
+
+        if (isMoving)
+        {
+            leftFlare *= 1.25f;
+            rightFlare *= 1.25f;
+        }
 
         if (leftThrusterFlame != null)
         {
@@ -297,6 +302,11 @@ public class CockpitVisuals : MonoBehaviour
         {
             rightThrusterFlame.transform.localScale = new Vector3(0.7f * rightFlare, 0.6f * rightFlare, 0.7f * rightFlare);
         }
+    }
+
+    public void UpdateSteering(float horizontalInput, bool isMoving)
+    {
+        UpdateSteering(horizontalInput, 0f, isMoving);
     }
 
     public void UpdateTurretAim(Vector3 targetWorldPos)

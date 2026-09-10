@@ -128,7 +128,7 @@ public class UIManager : MonoBehaviour
                 viewName = CameraController.Instance.currentViewMode == CameraViewMode.Arcade3D ? "3D ARCADE" :
                           (CameraController.Instance.currentViewMode == CameraViewMode.ActionFollow3D ? "ACTION FOLLOW" : "2D RETRO");
             }
-            viewModeText.text = $"<color=#00FFFF><b>[{viewName}]</b></color>  <b>A/D / ←/→:</b> Move  |  <b>SPACE / L-CLICK:</b> Fire  |  <b>SHIFT / R-CLICK:</b> Shield  |  <b>C/V/TAB:</b> Switch View";
+            viewModeText.text = $"<color=#00FFFF><b>[{viewName}]</b></color>  <b>Arrows / WASD:</b> Move  |  <b>SPACE / L-CLICK:</b> Fire  |  <b>SHIFT / R-CLICK:</b> Shield  |  <b>C/V/TAB:</b> View";
         }
 
         if (warningTimer > 0f)

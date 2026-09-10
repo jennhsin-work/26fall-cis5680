@@ -5,9 +5,13 @@ public class PlayerController : MonoBehaviour
 {
     public static PlayerController Instance { get; private set; }
 
-    [Header("Horizontal Movement")]
+    [Header("Ship Movement")]
     public float moveSpeed = 11f;
+    public float moveSpeedY = 9f;
     public float boundaryX = 10.5f;
+    public float minBoundaryY = 0f;
+    public float maxBoundaryY = 5.5f;
+    public float defaultZ = -6.5f;
 
     [Header("Mounted Weapon Aiming")]
     public float aimSensitivityMouse = 1.0f;
@@ -41,6 +45,7 @@ public class PlayerController : MonoBehaviour
     [HideInInspector] public GameObject activeBullet;
 
     private float horizontalInput = 0f;
+    private float verticalInput = 0f;
     private Vector2 keyboardAimInput = Vector2.zero;
     private float depthAdjustInput = 0f;
     private bool firePressed = false;
@@ -73,6 +78,10 @@ public class PlayerController : MonoBehaviour
     {
         currentEnergy = maxEnergy;
         reticleScreenPos = new Vector2(0.5f, 0.55f);
+        Vector3 pos = transform.position;
+        pos.z = defaultZ;
+        if (pos.y < minBoundaryY || pos.y > maxBoundaryY) pos.y = minBoundaryY;
+        transform.position = pos;
     }
 
     private void Update()
@@ -94,6 +103,7 @@ public class PlayerController : MonoBehaviour
     private void ReadInput()
     {
         horizontalInput = 0f;
+        verticalInput = 0f;
         keyboardAimInput = Vector2.zero;
         depthAdjustInput = 0f;
         firePressed = false;
@@ -105,23 +115,27 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) horizontalInput -= 1f;
             if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) horizontalInput += 1f;
 
-            // Keyboard Aiming: Up/Down Arrows or I/J/K/L
+            // Upward / Downward Ship Movement along Y axis: Up / Down Arrows or W / S Keys
+            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) verticalInput += 1f;
+            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) verticalInput -= 1f;
+
+            // Keyboard Aiming: I / J / K / L
             if (Keyboard.current.jKey.isPressed) keyboardAimInput.x -= 1f;
             if (Keyboard.current.lKey.isPressed) keyboardAimInput.x += 1f;
-            if (Keyboard.current.upArrowKey.isPressed || Keyboard.current.iKey.isPressed) keyboardAimInput.y += 1f;
-            if (Keyboard.current.downArrowKey.isPressed || Keyboard.current.kKey.isPressed) keyboardAimInput.y -= 1f;
+            if (Keyboard.current.iKey.isPressed) keyboardAimInput.y += 1f;
+            if (Keyboard.current.kKey.isPressed) keyboardAimInput.y -= 1f;
 
-            // Focus Depth Tuning: W / S or Q / E or R / F
-            if (Keyboard.current.wKey.isPressed || Keyboard.current.eKey.isPressed) depthAdjustInput += 1f;
-            if (Keyboard.current.sKey.isPressed || Keyboard.current.qKey.isPressed) depthAdjustInput -= 1f;
+            // Focus Depth Tuning: Q / E or R / F
+            if (Keyboard.current.eKey.isPressed || Keyboard.current.rKey.isPressed) depthAdjustInput += 1f;
+            if (Keyboard.current.qKey.isPressed || Keyboard.current.fKey.isPressed) depthAdjustInput -= 1f;
 
             // Focus Presets: 1 = Near (6.5m), 2 = Mid (13m), 3 = Far (19m)
             if (Keyboard.current.digit1Key.wasPressedThisFrame || Keyboard.current.numpad1Key.wasPressedThisFrame) SetFocusPreset(6.5f);
             if (Keyboard.current.digit2Key.wasPressedThisFrame || Keyboard.current.numpad2Key.wasPressedThisFrame) SetFocusPreset(13.0f);
             if (Keyboard.current.digit3Key.wasPressedThisFrame || Keyboard.current.numpad3Key.wasPressedThisFrame) SetFocusPreset(19.0f);
 
-            // Fire: Space, Enter, F, or Left Click
-            if (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.fKey.wasPressedThisFrame)
+            // Fire: Space, Enter, or Left Click
+            if (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.enterKey.wasPressedThisFrame)
             {
                 firePressed = true;
             }
@@ -140,6 +154,11 @@ public class PlayerController : MonoBehaviour
             float dpadX = Gamepad.current.dpad.x.ReadValue();
             if (Mathf.Abs(stickX) > 0.15f) horizontalInput += Mathf.Sign(stickX);
             else if (Mathf.Abs(dpadX) > 0.15f) horizontalInput += Mathf.Sign(dpadX);
+
+            float stickY = Gamepad.current.leftStick.y.ReadValue();
+            float dpadY = Gamepad.current.dpad.y.ReadValue();
+            if (Mathf.Abs(stickY) > 0.15f) verticalInput += Mathf.Sign(stickY);
+            else if (Mathf.Abs(dpadY) > 0.15f) verticalInput += Mathf.Sign(dpadY);
 
             if (Gamepad.current.buttonSouth.wasPressedThisFrame || Gamepad.current.rightTrigger.wasPressedThisFrame) firePressed = true;
             if (Gamepad.current.leftTrigger.isPressed || Gamepad.current.buttonEast.isPressed) shieldHeld = true;
@@ -193,22 +212,33 @@ public class PlayerController : MonoBehaviour
     private void HandleMovement()
     {
         Vector3 pos = transform.position;
+        float speedMult = (currentEnergy > 5f) ? 1.0f : 0.85f;
+        bool isMoving = false;
 
         if (Mathf.Abs(horizontalInput) > 0.01f)
         {
-            float speedMult = (currentEnergy > 5f) ? 1.0f : 0.85f;
             pos.x += Mathf.Clamp(horizontalInput, -1f, 1f) * moveSpeed * speedMult * Time.deltaTime;
             pos.x = Mathf.Clamp(pos.x, -boundaryX, boundaryX);
+            isMoving = true;
+        }
 
+        if (Mathf.Abs(verticalInput) > 0.01f)
+        {
+            pos.y += Mathf.Clamp(verticalInput, -1f, 1f) * moveSpeedY * speedMult * Time.deltaTime;
+            pos.y = Mathf.Clamp(pos.y, minBoundaryY, maxBoundaryY);
+            isMoving = true;
+        }
+
+        if (isMoving)
+        {
             // Movement consumes minor energy
             currentEnergy = Mathf.Max(0f, currentEnergy - moveEnergyDrain * Time.deltaTime);
         }
 
-        pos.z = -6.5f;
-        pos.y = 0f;
+        pos.z = defaultZ;
         transform.position = pos;
 
-        // Smooth bank roll on turns
+        // Smooth bank roll on horizontal steering (no forward/backward pitching)
         float targetRoll = -Mathf.Clamp(horizontalInput, -1f, 1f) * 14.0f;
         currentRoll = Mathf.Lerp(currentRoll, targetRoll, Time.deltaTime * 12.0f);
         transform.rotation = Quaternion.Euler(0f, 0f, currentRoll);
@@ -216,7 +246,7 @@ public class PlayerController : MonoBehaviour
         // Update pilot character and cockpit steering animation
         if (cockpitVisuals != null)
         {
-            cockpitVisuals.UpdateSteering(horizontalInput, Mathf.Abs(horizontalInput) > 0.01f);
+            cockpitVisuals.UpdateSteering(horizontalInput, verticalInput, isMoving);
         }
     }
 
@@ -255,7 +285,7 @@ public class PlayerController : MonoBehaviour
     {
         // Target aim along playfield
         float aimOffsetX = (reticleScreenPos.x - 0.5f) * 14.0f;
-        float aimTargetY = 1.0f;
+        float aimTargetY = transform.position.y + 0.3f;
         float aimTargetZ = transform.position.z + focalDepth;
         return new Vector3(transform.position.x + aimOffsetX, aimTargetY, aimTargetZ);
     }
@@ -272,7 +302,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // Natural energy recharge if not heavily draining
-        if (!isShieldActive && Mathf.Abs(horizontalInput) < 0.01f)
+        if (!isShieldActive && Mathf.Abs(horizontalInput) < 0.01f && Mathf.Abs(verticalInput) < 0.01f)
         {
             currentEnergy = Mathf.Min(maxEnergy, currentEnergy + baseEnergyRechargeRate * Time.deltaTime);
         }
@@ -433,7 +463,7 @@ public class PlayerController : MonoBehaviour
     {
         // Find nearest invader distance
         float nearestDist = 999f;
-        Invader[] invaders = FindObjectsByType<Invader>(FindObjectsSortMode.None);
+        Invader[] invaders = FindObjectsByType<Invader>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         bool hasDepthCharger = false;
         for (int i = 0; i < invaders.Length; i++)
         {
@@ -445,7 +475,7 @@ public class PlayerController : MonoBehaviour
 
         // Check for incoming bullets close to ship
         bool incomingBulletNear = false;
-        EnemyBullet[] bullets = FindObjectsByType<EnemyBullet>(FindObjectsSortMode.None);
+        EnemyBullet[] bullets = FindObjectsByType<EnemyBullet>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         for (int i = 0; i < bullets.Length; i++)
         {
             if (bullets[i] == null) continue;
@@ -491,6 +521,7 @@ public class PlayerController : MonoBehaviour
         if (!enabled)
         {
             horizontalInput = 0f;
+            verticalInput = 0f;
             isShieldActive = false;
             if (cockpitVisuals != null) cockpitVisuals.SetShieldVisual(false);
         }

@@ -107,8 +107,9 @@ public class EnemyBullet : MonoBehaviour
 
             // Direct Cockpit Hit
             float dx = Mathf.Abs(transform.position.x - player.transform.position.x);
+            float dy = Mathf.Abs(transform.position.y - player.transform.position.y);
             float dz = Mathf.Abs(transform.position.z - player.transform.position.z);
-            if (dx < 1.1f && dz < 0.9f)
+            if (dx < 1.1f && dy < 1.0f && dz < 0.9f)
             {
                 PlayerHealth ph = player.GetComponent<PlayerHealth>();
                 if (ph != null)

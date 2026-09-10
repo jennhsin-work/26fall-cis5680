@@ -21,8 +21,8 @@ public class Invader : MonoBehaviour
     public int rowIndex = 0;
     public int colIndex = 0;
     public bool isAlive = true;
-    public int maxHealth = 100;
-    public int currentHealth = 100;
+    public int maxHealth = 30;
+    public int currentHealth = 30;
 
     [Header("Depth-Charging State")]
     public InvaderState currentState = InvaderState.InFormation;
@@ -75,15 +75,15 @@ public class Invader : MonoBehaviour
         {
             case InvaderType.Squid:
                 points = 30;
-                maxHealth = 80;
+                maxHealth = 70;
                 break;
             case InvaderType.Crab:
                 points = 20;
-                maxHealth = 100;
+                maxHealth = 50;
                 break;
             case InvaderType.Octopus:
                 points = 10;
-                maxHealth = 120;
+                maxHealth = 30; // 1-hit kill with standard laser (baseDamage = 35)
                 break;
         }
         currentHealth = maxHealth;
@@ -109,7 +109,7 @@ public class Invader : MonoBehaviour
 
         currentState = InvaderState.DepthCharging;
         diveStartPos = transform.position;
-        diveTargetPos = new Vector3(targetPlayerPos.x, 0.4f, minDiveZ);
+        diveTargetPos = new Vector3(targetPlayerPos.x, targetPlayerPos.y, minDiveZ);
         diveProgress = 0f;
         diveShootTimer = 0.3f;
         diveSwayFreq = Random.Range(3f, 5f);
@@ -154,7 +154,7 @@ public class Invader : MonoBehaviour
         }
 
         // Check collision threat to Player
-        PlayerController player = FindFirstObjectByType<PlayerController>();
+        PlayerController player = FindAnyObjectByType<PlayerController>();
         if (player != null)
         {
             float distToPlayer = Vector3.Distance(transform.position, player.transform.position);
@@ -212,7 +212,7 @@ public class Invader : MonoBehaviour
         Vector3 spawnPos = transform.position + Vector3.back * 0.7f;
         Vector3 targetPos = Vector3.back * 6.5f;
 
-        PlayerController player = FindFirstObjectByType<PlayerController>();
+        PlayerController player = FindAnyObjectByType<PlayerController>();
         if (player != null)
         {
             targetPos = player.transform.position + Vector3.up * 0.4f;
@@ -303,13 +303,20 @@ public class Invader : MonoBehaviour
             CreateExplosionVFX(transform.position);
         }
 
-        FormationController formation = FindFirstObjectByType<FormationController>();
+        FormationController formation = FindAnyObjectByType<FormationController>();
         if (formation != null)
         {
             formation.OnInvaderKilled(this);
         }
 
-        Destroy(gameObject);
+        if (Application.isPlaying)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            DestroyImmediate(gameObject);
+        }
     }
 
     private void CreateGlanceSparks(Vector3 pos)
